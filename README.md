@@ -1,5 +1,7 @@
 # Veridex — Fake Review Detection System
 
+[![CI Pipeline](https://github.com/Namitha938/Fake-Review-Detection-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Namitha938/Fake-Review-Detection-System/actions/workflows/ci.yml)
+
 An enterprise-grade, end-to-end Machine Learning and Natural Language Processing (NLP) web platform engineered to detect deceptive opinion spam, fake customer reviews, astroturfing campaigns, and repetitive copy across online marketplaces and hospitality platforms.
 
 ---
@@ -75,7 +77,7 @@ The system is split into two cleanly decoupled experiences:
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework**: React 18 + Vite + TypeScript
+- **Framework**: React 19 + Vite + TypeScript
 - **Styling**: Tailwind CSS, Lucide React icons
 - **State & Routing**: React Router v7, TanStack Query
 - **Networking**: Axios with Bearer token interceptor and 401 handling
