@@ -58,3 +58,9 @@ Thumbs.db
 
 # Sample generated test certificate PDFs
 Veridex_Certificate_*.pdf
+
+# Excluded documentation and local compose
+DEPLOYMENT.md
+RESUME_SECTION.md
+docker-compose.yml
+

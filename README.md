@@ -97,9 +97,8 @@ The system is split into two cleanly decoupled experiences:
 - **Explainability**: SHAP & feature attributions
 
 ### DevOps & Testing
-- **Containers**: Docker & Docker Compose
 - **Web Server / Proxy**: Nginx
-- **Testing**: pytest & httpx (10/10 automated tests passing)
+- **Testing**: pytest & httpx (24/24 automated tests passing)
 - **CI/CD**: GitHub Actions workflow
 
 ---
@@ -134,20 +133,6 @@ npm install
 npm run dev
 ```
 *The React application opens at `http://localhost:5173`.*
-
----
-
-### Option 2: Running with Docker Compose (Production Stack)
-
-Spin up MySQL 8, the FastAPI backend, and the React frontend with a single command:
-
-```bash
-docker-compose up --build
-```
-
-- **Frontend Application**: `http://localhost:3000`
-- **Backend API Docs**: `http://localhost:8000/docs`
-- **MySQL Database**: `localhost:3306`
 
 ---
 
