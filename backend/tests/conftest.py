@@ -5,11 +5,12 @@ import sys
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["TESTING"] = "1"
+os.environ["DATABASE_URL"] = "sqlite:///./test_fake_reviews.db"
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.database import Base, get_db
+from app.database import Base, get_db, engine
 from app.main import app
 
 TEST_DB_URL = "sqlite:///./test_fake_reviews.db"
@@ -19,6 +20,10 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
     Base.metadata.create_all(bind=test_engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
     yield
     Base.metadata.drop_all(bind=test_engine)
     if os.path.exists("./test_fake_reviews.db"):

@@ -10,8 +10,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 
-client = TestClient(app)
-
 def test_reviewer_activity_burst_detection():
     """Test rapid temporal burst detection (clustering within 24 hours)."""
     now = datetime.utcnow()
@@ -89,7 +87,7 @@ def test_calibrated_classifier_explainability():
     assert len(explanations) > 0
     assert all("word" in e and "score" in e and "is_suspicious" in e for e in explanations)
 
-def test_rest_api_predict_endpoint():
+def test_rest_api_predict_endpoint(client):
     """Test production REST endpoint /api/v1/predict with reviewer forensics."""
     payload = {
         "review_text": "BEST HOTEL IN THE ENTIRE WORLD! 100/10 stars, angel pillows and divine luxury!",

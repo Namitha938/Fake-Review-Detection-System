@@ -27,6 +27,10 @@ jobs:
           python -m spacy download en_core_web_sm
 
       - name: Run Pytest
+        env:
+          TESTING: '1'
+          DATABASE_URL: 'sqlite:///./test_fake_reviews.db'
+          PYTHONPATH: .
         run: |
           cd backend
           pytest -v
