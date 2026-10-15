@@ -202,60 +202,75 @@ export const AIAssistantWidget: React.FC = () => {
 
   return (
     <>
-      {/* FLOATING ACTION TRIGGER BUTTON */}
+      {/* FLOATING ACTION TRIGGER BUTTON (Compact Icon-Only FAB) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 transition-all duration-300 hover:scale-105"
-          title="Open Veridex AI Forensic Assistant"
+          className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 transition-all duration-200 hover:scale-105 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          aria-label="Open Veridex AI Co-Pilot"
+          title="Open Veridex AI Co-Pilot"
         >
-          <div className="relative">
-            <Bot className="w-5 h-5 text-white animate-bounce-slow" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-indigo-600" />
+          <div className="relative flex items-center justify-center">
+            <Bot className="w-5 h-5 text-white" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-indigo-700" />
           </div>
-          <span className="text-xs font-bold tracking-wide pr-1">Veridex AI Co-Pilot</span>
         </button>
       )}
 
-      {/* CHAT WINDOW DRAWER */}
+      {/* CHAT WINDOW SIDE DRAWER */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[95vw] sm:w-[440px] h-[600px] max-h-[85vh] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden animate-scale-up">
-          {/* Header */}
-          <div className="p-4 px-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Veridex AI Co-Pilot</h3>
-                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
-                    Active
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Forensics & Deception Intelligence Engine
-                </p>
-              </div>
-            </div>
+        <>
+          {/* Backdrop on mobile */}
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50 sm:hidden transition-opacity"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={clearChat}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
-                title="Clear Chat"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
-                title="Minimize Window"
-              >
-                <Minimize2 className="w-4 h-4" />
-              </button>
+          <aside
+            aria-label="Veridex AI Co-Pilot Drawer"
+            className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-250"
+          >
+            {/* Header */}
+            <div className="p-4 px-5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white shadow-xs">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Veridex AI Co-Pilot</h3>
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Forensics & Deception Intelligence
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={clearChat}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                  title="Clear chat"
+                  aria-label="Clear chat"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                  title="Close panel"
+                  aria-label="Close panel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
 
           {/* Active Context Chip */}
           {activeContext && (
@@ -387,9 +402,10 @@ export const AIAssistantWidget: React.FC = () => {
               <Send className="w-4 h-4" />
             </button>
           </form>
-        </div>
-      )}
-    </>
+        </aside>
+      </>
+    )}
+  </>
   );
 };
 

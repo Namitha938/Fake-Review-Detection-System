@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { modelsApi, datasetsApi } from '../../api';
 import { ModelRecord, Dataset } from '../../types';
 import { ConfusionMatrix } from '../../components/ConfusionMatrix';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 import {
   Cpu,
   Play,
@@ -27,6 +29,10 @@ export const ModelTraining: React.FC = () => {
   const [selectedModelType, setSelectedModelType] = useState<string>('logistic_regression');
   const [isTraining, setIsTraining] = useState(false);
   const [activatingId, setActivatingId] = useState<number | null>(null);
+
+  // Confirmation modal state for activating model
+  const [modelToActivate, setModelToActivate] = useState<ModelRecord | null>(null);
+  const [formValidationMessage, setFormValidationMessage] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,8 +77,9 @@ export const ModelTraining: React.FC = () => {
 
   const handleStartTraining = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormValidationMessage(null);
     if (!selectedDatasetId) {
-      alert('Please select a training dataset.');
+      setFormValidationMessage('Please select a training dataset corpus.');
       return;
     }
     setIsTraining(true);
@@ -86,13 +93,15 @@ export const ModelTraining: React.FC = () => {
       const updated = await modelsApi.getModels();
       setModels(updated);
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Failed to start training run.');
+      setError(err?.response?.data?.detail || 'Failed to start training run.');
     } finally {
       setIsTraining(false);
     }
   };
 
-  const handleActivateModel = async (id: number) => {
+  const handleConfirmActivate = async () => {
+    if (!modelToActivate) return;
+    const id = modelToActivate.id;
     setActivatingId(id);
     try {
       await modelsApi.activateModel(id);
@@ -102,8 +111,9 @@ export const ModelTraining: React.FC = () => {
           is_active: m.id === id,
         }))
       );
+      setModelToActivate(null);
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Failed to set active model.');
+      setError(err?.response?.data?.detail || 'Failed to set active model.');
     } finally {
       setActivatingId(null);
     }
@@ -118,10 +128,10 @@ export const ModelTraining: React.FC = () => {
             <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20">
               <Cpu className="w-6 h-6" />
             </div>
-            Model Training & Evaluation Benchmarks
+            Model training & evaluation benchmarks
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-            Train classifiers across dataset corpora, evaluate F1, Precision, and Recall scores, inspect confusion matrices, and designate the active inference pipeline.
+            Train classifiers across dataset corpora, evaluate F1, precision, and recall scores, inspect confusion matrices, and designate the active inference pipeline.
           </p>
         </div>
 
@@ -129,7 +139,7 @@ export const ModelTraining: React.FC = () => {
           onClick={fetchData}
           className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-xs transition-all"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh Runs
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh runs
         </button>
       </div>
 
@@ -140,20 +150,27 @@ export const ModelTraining: React.FC = () => {
         </div>
       )}
 
+      {formValidationMessage && (
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{formValidationMessage}</span>
+        </div>
+      )}
+
       {/* Start Training Run Card */}
       <div className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-5">
         <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <Zap className="w-5 h-5 text-indigo-500" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            Launch New Classifier Training Job
+          <Zap className="w-4 h-4 text-indigo-500" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Launch new classifier training job
           </h2>
         </div>
 
         <form onSubmit={handleStartTraining} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           {/* Dataset Selector */}
           <div>
-            <label className="block font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-              Select Dataset Corpus
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Select dataset corpus
             </label>
             <select
               value={selectedDatasetId}
@@ -174,8 +191,8 @@ export const ModelTraining: React.FC = () => {
 
           {/* Model Architecture Selector */}
           <div>
-            <label className="block font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
-              Model Architecture
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Model architecture
             </label>
             <select
               value={selectedModelType}
@@ -194,17 +211,17 @@ export const ModelTraining: React.FC = () => {
             <button
               type="submit"
               disabled={isTraining || !selectedDatasetId}
-              className="w-full py-2.5 px-4 rounded-xl font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               {isTraining ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Initiating Run...
+                  Initiating run...
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  Start Training Job
+                  Start training job
                 </>
               )}
             </button>
@@ -215,9 +232,9 @@ export const ModelTraining: React.FC = () => {
       {/* Model Runs Cards */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-500" />
-            Trained Model Runs & Confusion Matrices
+            Trained model runs & confusion matrices
           </h2>
           <span className="text-xs text-slate-500 font-mono">{models.length} runs evaluated</span>
         </div>
@@ -229,7 +246,7 @@ export const ModelTraining: React.FC = () => {
           </div>
         ) : models.length === 0 ? (
           <div className="p-12 text-center text-xs text-slate-400 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-            No models trained yet. Select a dataset above and click "Start Training Job".
+            No models trained yet. Select a dataset above and click "Start training job".
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -251,8 +268,8 @@ export const ModelTraining: React.FC = () => {
                           {model.model_name}
                         </h3>
                         {model.is_active && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
-                            <Check className="w-3 h-3" /> ACTIVE IN PRODUCTION
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                            <Check className="w-3 h-3" /> Active in production
                           </span>
                         )}
                       </div>
@@ -262,7 +279,7 @@ export const ModelTraining: React.FC = () => {
                     </div>
 
                     <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
+                      className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded-full capitalize ${
                         model.status === 'completed'
                           ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                           : model.status === 'training'
@@ -277,26 +294,26 @@ export const ModelTraining: React.FC = () => {
                   {/* 4 Performance Metric Chips */}
                   <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                      <div className="text-[10px] uppercase font-semibold text-slate-400">Accuracy</div>
-                      <div className="text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                      <div className="text-[10px] font-medium text-slate-400">Accuracy</div>
+                      <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400 font-mono tabular-nums">
                         {(model.accuracy * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                      <div className="text-[10px] uppercase font-semibold text-slate-400">Precision</div>
-                      <div className="text-sm font-black text-purple-600 dark:text-purple-400 font-mono">
+                      <div className="text-[10px] font-medium text-slate-400">Precision</div>
+                      <div className="text-sm font-bold text-purple-600 dark:text-purple-400 font-mono tabular-nums">
                         {(model.precision * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                      <div className="text-[10px] uppercase font-semibold text-slate-400">Recall</div>
-                      <div className="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                      <div className="text-[10px] font-medium text-slate-400">Recall</div>
+                      <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
                         {(model.recall * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                      <div className="text-[10px] uppercase font-semibold text-slate-400">F1-Score</div>
-                      <div className="text-sm font-black text-rose-600 dark:text-rose-400 font-mono">
+                      <div className="text-[10px] font-medium text-slate-400">F1-score</div>
+                      <div className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums">
                         {(model.f1_score * 100).toFixed(1)}%
                       </div>
                     </div>
@@ -314,21 +331,12 @@ export const ModelTraining: React.FC = () => {
 
                   {!model.is_active && model.status === 'completed' && (
                     <button
-                      onClick={() => handleActivateModel(model.id)}
+                      onClick={() => setModelToActivate(model)}
                       disabled={activatingId === model.id}
-                      className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 transition-all flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 transition-all flex items-center gap-1.5"
                     >
-                      {activatingId === model.id ? (
-                        <>
-                          <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                          Activating...
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          Set as Active Model
-                        </>
-                      )}
+                      <Check className="w-3.5 h-3.5" />
+                      Set as active model
                     </button>
                   )}
                 </div>
@@ -365,10 +373,10 @@ export const ModelTraining: React.FC = () => {
                   <Layers className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                    DistilBERT Transformer vs. TF-IDF Baseline
-                    <span className="text-[10px] font-mono normal-case px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 font-bold">
-                      CalibratedClassifierCV Verified
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    DistilBERT transformer vs. TF-IDF baseline
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 font-medium">
+                      CalibratedClassifierCV verified
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -378,9 +386,9 @@ export const ModelTraining: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white font-extrabold text-xs shadow-xs">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white font-bold text-xs shadow-xs">
                   <Zap className="w-3.5 h-3.5 fill-current" />
-                  +{diffNum.toFixed(1)}% F1 Gain (DistilBERT)
+                  +{diffNum.toFixed(1)}% F1 gain (DistilBERT)
                 </span>
               </div>
             </div>
@@ -391,35 +399,35 @@ export const ModelTraining: React.FC = () => {
               <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Baseline Reference</span>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">TF-IDF + Logistic Regression</h4>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Baseline reference</span>
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">TF-IDF + Logistic Regression</h4>
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                     Baseline
                   </span>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-[9px] uppercase font-semibold text-slate-400">Accuracy</div>
-                    <div className="text-xs font-black text-slate-900 dark:text-white font-mono">{bAcc}%</div>
+                    <div className="text-[9px] font-medium text-slate-400">Accuracy</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">{bAcc}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-[9px] uppercase font-semibold text-slate-400">Precision</div>
-                    <div className="text-xs font-black text-slate-900 dark:text-white font-mono">{bPrec}%</div>
+                    <div className="text-[9px] font-medium text-slate-400">Precision</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">{bPrec}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-[9px] uppercase font-semibold text-slate-400">Recall</div>
-                    <div className="text-xs font-black text-slate-900 dark:text-white font-mono">{bRec}%</div>
+                    <div className="text-[9px] font-medium text-slate-400">Recall</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white font-mono">{bRec}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                    <div className="text-[9px] uppercase font-semibold text-slate-400">F1-Score</div>
-                    <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono">{bF1}%</div>
+                    <div className="text-[9px] font-medium text-slate-400">F1-score</div>
+                    <div className="text-xs font-bold text-rose-600 dark:text-rose-400 font-mono">{bF1}%</div>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Avg Latency: <strong className="text-slate-900 dark:text-white font-mono">3.4 ms</strong></span>
+                  <span>Avg latency: <strong className="text-slate-900 dark:text-white font-mono">3.4 ms</strong></span>
                   <span>Calibration: <strong className="text-emerald-600 dark:text-emerald-400">Platt Sigmoid (5-fold)</strong></span>
                 </div>
               </div>
@@ -429,35 +437,35 @@ export const ModelTraining: React.FC = () => {
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Transformer Fine-Tuned</span>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">DistilBERT (distilbert-base-uncased)</h4>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Transformer fine-tuned</span>
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">DistilBERT (distilbert-base-uncased)</h4>
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40">
                     Candidate
                   </span>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="p-2 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
-                    <div className="text-[9px] uppercase font-semibold text-indigo-600 dark:text-indigo-400">Accuracy</div>
-                    <div className="text-xs font-black text-indigo-600 dark:text-indigo-300 font-mono">{dAcc}%</div>
+                    <div className="text-[9px] font-medium text-indigo-600 dark:text-indigo-400">Accuracy</div>
+                    <div className="text-xs font-bold text-indigo-600 dark:text-indigo-300 font-mono">{dAcc}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
-                    <div className="text-[9px] uppercase font-semibold text-purple-600 dark:text-purple-400">Precision</div>
-                    <div className="text-xs font-black text-purple-600 dark:text-purple-300 font-mono">{dPrec}%</div>
+                    <div className="text-[9px] font-medium text-purple-600 dark:text-purple-400">Precision</div>
+                    <div className="text-xs font-bold text-purple-600 dark:text-purple-300 font-mono">{dPrec}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
-                    <div className="text-[9px] uppercase font-semibold text-emerald-600 dark:text-emerald-400">Recall</div>
-                    <div className="text-xs font-black text-emerald-600 dark:text-emerald-300 font-mono">{dRec}%</div>
+                    <div className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400">Recall</div>
+                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-300 font-mono">{dRec}%</div>
                   </div>
                   <div className="p-2 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
-                    <div className="text-[9px] uppercase font-semibold text-rose-600 dark:text-rose-400">F1-Score</div>
-                    <div className="text-xs font-black text-rose-600 dark:text-rose-400 font-mono">{dF1}%</div>
+                    <div className="text-[9px] font-medium text-rose-600 dark:text-rose-400">F1-score</div>
+                    <div className="text-xs font-bold text-rose-600 dark:text-rose-400 font-mono">{dF1}%</div>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Avg Latency: <strong className="text-slate-900 dark:text-white font-mono">48.2 ms</strong></span>
+                  <span>Avg latency: <strong className="text-slate-900 dark:text-white font-mono">48.2 ms</strong></span>
                   <span>Calibration: <strong className="text-emerald-600 dark:text-emerald-400">Calibrated (Sigmoid)</strong></span>
                 </div>
               </div>
@@ -466,7 +474,7 @@ export const ModelTraining: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-2.5">
               <Zap className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
               <div>
-                <strong>Architecture Finding:</strong> DistilBERT yields a <strong>+{diffNum.toFixed(1)}% F1 gain</strong> over TF-IDF Logistic Regression ({dF1}% vs. {bF1}%) on the 1,600 review Ott et al. benchmark split. For ultra-low-latency high-throughput requirements (&gt;1,000 req/sec), the calibrated TF-IDF model operates at <strong>3.4 ms</strong> per prediction.
+                <strong>Architecture finding:</strong> DistilBERT yields a <strong>+{diffNum.toFixed(1)}% F1 gain</strong> over TF-IDF Logistic Regression ({dF1}% vs. {bF1}%) on the 1,600 review Ott et al. benchmark split. For ultra-low-latency high-throughput requirements (&gt;1,000 req/sec), the calibrated TF-IDF model operates at <strong>3.4 ms</strong> per prediction.
               </div>
             </div>
           </div>
@@ -478,22 +486,22 @@ export const ModelTraining: React.FC = () => {
         <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
             <BarChart2 className="w-4 h-4 text-indigo-500" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Model Comparison Benchmark Table
+            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+              Model comparison benchmark table
             </h3>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 font-semibold uppercase tracking-wider">
+              <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="p-3">Model</th>
                   <th className="p-3">Type</th>
                   <th className="p-3">Accuracy</th>
                   <th className="p-3">Precision</th>
                   <th className="p-3">Recall</th>
-                  <th className="p-3">F1-Score</th>
-                  <th className="p-3">Δ vs Baseline</th>
+                  <th className="p-3">F1-score</th>
+                  <th className="p-3">Δ vs baseline</th>
                   <th className="p-3">Calibration</th>
                   <th className="p-3">Latency</th>
                   <th className="p-3">Status</th>
@@ -512,12 +520,12 @@ export const ModelTraining: React.FC = () => {
                       <tr key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                         <td className="p-3 font-semibold text-slate-900 dark:text-white">{m.model_name}</td>
                         <td className="p-3 font-mono text-[11px] text-slate-500">{m.model_type}</td>
-                        <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <td className="p-3 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
                           {(m.accuracy * 100).toFixed(1)}%
                         </td>
                         <td className="p-3 font-mono">{(m.precision * 100).toFixed(1)}%</td>
                         <td className="p-3 font-mono">{(m.recall * 100).toFixed(1)}%</td>
-                        <td className="p-3 font-mono font-bold text-rose-600 dark:text-rose-400">
+                        <td className="p-3 font-mono font-semibold text-rose-600 dark:text-rose-400">
                           {(m.f1_score * 100).toFixed(1)}%
                         </td>
                         <td className="p-3 font-mono font-semibold">
@@ -530,7 +538,7 @@ export const ModelTraining: React.FC = () => {
                           )}
                         </td>
                         <td className="p-3">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                             Calibrated (Sigmoid)
                           </span>
                         </td>
@@ -539,8 +547,8 @@ export const ModelTraining: React.FC = () => {
                         </td>
                         <td className="p-3">
                           {m.is_active ? (
-                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full">
-                              ACTIVE
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                              Active
                             </span>
                           ) : (
                             <span className="text-[10px] text-slate-400">Idle</span>
@@ -549,7 +557,7 @@ export const ModelTraining: React.FC = () => {
                         <td className="p-3 text-right">
                           {!m.is_active && m.status === 'completed' && (
                             <button
-                              onClick={() => handleActivateModel(m.id)}
+                              onClick={() => setModelToActivate(m)}
                               className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
                             >
                               Activate
@@ -565,6 +573,47 @@ export const ModelTraining: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Active Model Promotion */}
+      <Modal
+        isOpen={!!modelToActivate}
+        onClose={() => setModelToActivate(null)}
+        title="Designate active production model"
+        description={`Are you sure you want to promote "${modelToActivate?.model_name}" to the active inference pipeline?`}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setModelToActivate(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              loading={activatingId === modelToActivate?.id}
+              loadingText="Activating..."
+              onClick={handleConfirmActivate}
+            >
+              Set as active
+            </Button>
+          </div>
+        }
+      >
+        <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
+          <p>
+            All single analysis queries, batch uploads, and duel comparisons will immediately be evaluated using this model architecture.
+          </p>
+          {modelToActivate && (
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[11px] space-y-1 font-mono">
+              <div>Type: <span className="font-semibold text-slate-900 dark:text-white">{modelToActivate.model_type}</span></div>
+              <div>Test accuracy: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{(modelToActivate.accuracy * 100).toFixed(1)}%</span></div>
+              <div>F1-score: <span className="font-semibold text-rose-600 dark:text-rose-400">{(modelToActivate.f1_score * 100).toFixed(1)}%</span></div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

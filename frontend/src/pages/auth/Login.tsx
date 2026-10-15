@@ -12,9 +12,6 @@ import {
   RefreshCw,
   Clock,
   ShieldCheck,
-  ShieldAlert,
-  UserCheck,
-  Zap,
   CheckCircle2,
   X,
   AlertTriangle,
@@ -53,15 +50,6 @@ export const Login: React.FC = () => {
   // Email format check
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  // Load remembered email if available
-  useEffect(() => {
-    const saved = localStorage.getItem('veridex_remembered_email');
-    if (saved) {
-      setEmail(saved);
-      setRememberMe(true);
-    }
-  }, []);
-
   // Countdown timers for 2FA
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
@@ -84,12 +72,6 @@ export const Login: React.FC = () => {
     if (e.getModifierState) {
       setCapsLockOn(e.getModifierState('CapsLock'));
     }
-  };
-
-  const autofillDemoAccount = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
   };
 
   const handlePasteOtp = async () => {
@@ -373,35 +355,6 @@ export const Login: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Demo Credentials Bar (Instant Testing for Mentors & Evaluators) */}
-          <div className="mb-5 p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 fill-indigo-500 text-indigo-500" />
-                Quick Demo Access:
-              </span>
-              <span className="text-[10px] text-slate-400">One-click autofill</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => autofillDemoAccount('namithaaa444@gmail.com', 'AdminPass123!')}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-xs transition-all hover:scale-[1.02] active:scale-95 text-left flex items-center gap-1.5 cursor-pointer"
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
-                <span className="truncate">Admin Demo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => autofillDemoAccount('auditor.demo@veridex.internal', 'AuditorDemo@2026')}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-xs transition-all hover:scale-[1.02] active:scale-95 text-left flex items-center gap-1.5 cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                <span className="truncate">Auditor Demo</span>
-              </button>
-            </div>
-          </div>
-
           {/* Inline Error Alert Banner */}
           {error && (
             <div className="mb-5">
@@ -577,7 +530,7 @@ export const Login: React.FC = () => {
           {/* Security Assurance Footnote */}
           <div className="mt-5 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
             <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-            <span>256-Bit TLS Encryption • ISO/IEC 27001 Standard • Zero Knowledge</span>
+            <span>Protected by secure sign-in</span>
           </div>
         </div>
       )}

@@ -312,6 +312,12 @@ export const Register: React.FC = () => {
           Sign in here
         </Link>
       </div>
+
+      {/* Security Assurance Footnote */}
+      <div className="mt-5 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+        <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+        <span>Protected by secure sign-in</span>
+      </div>
     </div>
   );
 };

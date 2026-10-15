@@ -6,8 +6,8 @@ export interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: React.ReactNode;
-  color: StatCardColor;
+  icon?: React.ReactNode;
+  color?: StatCardColor;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -15,49 +15,38 @@ export const StatCard: React.FC<StatCardProps> = ({
   value,
   subtitle,
   icon,
-  color,
+  color = 'indigo',
 }) => {
-  const cssVar = `var(--color-${color})`;
+  const dotColorClass = {
+    indigo: 'bg-indigo-500',
+    rose: 'bg-rose-500',
+    violet: 'bg-violet-500',
+    amber: 'bg-amber-500',
+    emerald: 'bg-emerald-500',
+  }[color];
 
   return (
-    <div
-      className="relative p-5 rounded-2xl overflow-hidden backdrop-blur-sm shadow-xs transition-all hover:scale-[1.01] duration-200 motion-reduce:transition-none"
-      style={{
-        backgroundColor: `color-mix(in srgb, ${cssVar} 8%, var(--card-bg, #ffffff))`,
-        borderColor: `color-mix(in srgb, ${cssVar} 30%, transparent)`,
-        borderWidth: '1px',
-        borderStyle: 'solid',
-      }}
-    >
-      {/* 4px top accent bar */}
-      <div
-        className="absolute top-0 left-0 right-0 h-1"
-        style={{ backgroundColor: cssVar }}
-      />
-
+    <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs transition-all hover:border-slate-300 dark:hover:border-slate-700">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-          {title}
-        </span>
-        {/* Solid colored icon tile with a white icon */}
-        <div
-          className="p-2.5 rounded-xl text-white shadow-xs flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: cssVar }}
-        >
-          {icon}
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${dotColorClass} flex-shrink-0`} />
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {title}
+          </span>
         </div>
+        {icon && (
+          <div className="text-slate-400 dark:text-slate-500">
+            {icon}
+          </div>
+        )}
       </div>
 
       <div className="mt-3">
-        {/* Big number in the card's color */}
-        <h4
-          className="text-3xl font-extrabold tracking-tight font-mono"
-          style={{ color: cssVar }}
-        >
+        <h4 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white font-sans tabular-nums">
           {value}
         </h4>
         {subtitle && (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {subtitle}
           </p>
         )}
@@ -65,4 +54,3 @@ export const StatCard: React.FC<StatCardProps> = ({
     </div>
   );
 };
-

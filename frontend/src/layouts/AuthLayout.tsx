@@ -1,10 +1,59 @@
-import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { ShieldAlert, CheckCircle2, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export const AuthLayout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+
+  const isRegister = location.pathname.startsWith('/register');
+  const isForgotPassword = location.pathname.startsWith('/forgot-password');
+
+  const heading = isRegister
+    ? 'Start verifying reviews today'
+    : isForgotPassword
+    ? 'Reset your password'
+    : 'Pick up where you left off';
+
+  const subtext = isRegister
+    ? 'Create a free account to save your analyses, run bulk uploads and track results.'
+    : isForgotPassword
+    ? 'Enter your account email to receive secure recovery instructions.'
+    : 'Your saved analyses, bulk uploads and model benchmarks are waiting.';
+
+  // Sync document title and meta description per route
+  useEffect(() => {
+    let pageTitle = 'Sign In — Veridex';
+    let metaDesc = 'Your saved analyses, bulk uploads and model benchmarks are waiting.';
+
+    if (isRegister) {
+      pageTitle = 'Create Account — Veridex';
+      metaDesc = 'Create a free account to save your analyses, run bulk uploads and track results.';
+    } else if (isForgotPassword) {
+      pageTitle = 'Reset Password — Veridex';
+      metaDesc = 'Reset your Veridex account password securely.';
+    }
+
+    document.title = pageTitle;
+
+    let metaTag = document.querySelector('meta[name="description"]');
+    if (!metaTag) {
+      metaTag = document.createElement('meta');
+      metaTag.setAttribute('name', 'description');
+      document.head.appendChild(metaTag);
+    }
+    metaTag.setAttribute('content', metaDesc);
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', pageTitle);
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', metaDesc);
+    const twTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twTitle) twTitle.setAttribute('content', pageTitle);
+    const twDesc = document.querySelector('meta[name="twitter:description"]');
+    if (twDesc) twDesc.setAttribute('content', metaDesc);
+  }, [isRegister, isForgotPassword]);
 
   return (
     <div className="min-h-screen flex w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -37,39 +86,16 @@ export const AuthLayout: React.FC = () => {
               Veridex
             </span>
           </Link>
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/90 border border-white/20 backdrop-blur-md">
-            v2.0 Forensic Core
-          </span>
-        </div>
-
-        {/* Live Forensic Preview Glass Card (Middle Visual Highlight) */}
-        <div className="relative z-10 my-auto p-4 rounded-2xl bg-slate-900/60 border border-white/15 backdrop-blur-xl shadow-2xl shadow-black/50 space-y-2.5 max-w-sm animate-fade-in">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold uppercase tracking-wider text-[10px]">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Live Forensic Scan
-            </span>
-            <span className="text-[11px] text-slate-400 font-mono">AUDIT-882</span>
-          </div>
-          <p className="text-xs text-slate-200 italic line-clamp-2">
-            "Battery lasted 6 hours of continuous 4K video recording. Autofocus is snappy..."
-          </p>
-          <div className="pt-1.5 flex items-center justify-between border-t border-white/10 text-[11px]">
-            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-[10px] uppercase">
-              VERIFIED GENUINE (98.2%)
-            </span>
-            <span className="text-slate-400 font-mono text-[10px]">Latency: 28ms</span>
-          </div>
         </div>
 
         {/* Center/Bottom Copy & Trust Bullets */}
         <div className="relative z-10 max-w-lg space-y-6 pb-6">
           <div className="space-y-3">
-            <h1 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md">
-              Know which reviews you can trust
+            <h1 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md [text-wrap:balance]">
+              {heading}
             </h1>
             <p className="text-sm xl:text-base text-slate-200/90 leading-relaxed font-normal">
-              Empower your purchasing decisions and brand reputation with explainable AI forensics, sentiment dissonance detection, and real-time review verification.
+              {subtext}
             </p>
           </div>
 
@@ -106,7 +132,7 @@ export const AuthLayout: React.FC = () => {
 
         {/* Subtle Bottom Assurance */}
         <div className="relative z-10 text-[11px] text-slate-300/60 font-medium">
-          Veridex Forensic Core v2.0 • Calibrated NLP Verification
+          Veridex • Automated review authenticity verification
         </div>
       </div>
 
