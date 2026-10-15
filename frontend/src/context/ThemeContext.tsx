@@ -14,7 +14,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = localStorage.getItem('veridex_theme') || localStorage.getItem('trustguard_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return 'dark'; // default to modern dark theme
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+    return 'dark'; // modern default
   });
 
   useEffect(() => {

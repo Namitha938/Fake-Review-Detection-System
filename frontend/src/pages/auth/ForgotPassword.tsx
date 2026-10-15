@@ -150,8 +150,7 @@ export const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 transition-colors duration-200">
-      <div className="w-full max-w-md p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-xl dark:shadow-2xl backdrop-blur-sm">
+    <div className="w-full max-w-md p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-xl dark:shadow-2xl shadow-indigo-500/5 backdrop-blur-md animate-fade-in">
         {/* Brand Icon Header */}
         <div className="text-center mb-6">
           <Link
@@ -420,7 +419,6 @@ export const ForgotPassword: React.FC = () => {
           </Link>
         </div>
       </div>
-    </div>
   );
 };
 

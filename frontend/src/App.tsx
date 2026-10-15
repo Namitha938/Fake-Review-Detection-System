@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LandingLayout } from './layouts/LandingLayout';
+import { AuthLayout } from './layouts/AuthLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AdminRoute } from './auth/AdminRoute';
@@ -42,13 +43,17 @@ export const App: React.FC = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              {/* 1. PUBLIC ROUTES (Navbar with only public links) */}
+              {/* 1. PUBLIC ROUTES (Navbar with public links) */}
               <Route element={<LandingLayout />}>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/verify/:id" element={<VerifyCertificate />} />
+              </Route>
+
+              {/* 2. AUTHENTICATION ROUTES (2-column layout, Navbar hidden) */}
+              <Route element={<AuthLayout />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/verify/:id" element={<VerifyCertificate />} />
               </Route>
 
               {/* 2. PRIVATE APP ROUTES (Sidebar shell, login required) */}
