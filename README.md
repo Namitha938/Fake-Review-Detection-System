@@ -1,64 +1,70 @@
 # Veridex — Fake Review Detection System
 
 [![CI Pipeline](https://github.com/Namitha938/Fake-Review-Detection-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Namitha938/Fake-Review-Detection-System/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20Clean%20Build-blue)](frontend/src)
+[![Python](https://img.shields.io/badge/Python-3.11%20FastAPI-blue)](backend)
 
-An enterprise-grade, end-to-end Machine Learning and Natural Language Processing (NLP) web platform engineered to detect deceptive opinion spam, fake customer reviews, astroturfing campaigns, and repetitive copy across online marketplaces and hospitality platforms.
+An enterprise-grade, end-to-end Machine Learning and Natural Language Processing (NLP) web platform engineered to detect deceptive opinion spam, fake customer reviews, syndicated astroturfing campaigns, and rating manipulation across online marketplaces and hospitality platforms.
 
 ---
 
-## 🏛️ Architecture Overview
+## 🏛️ System Architecture
 
-The system is split into two cleanly decoupled experiences:
+```mermaid
+flowchart TD
+    User([User / Auditor])
 
-### 1. Public Landing Site (`/` — No Login Needed)
-- **Navbar**: Strictly public navigation (Veridex Logo & Wordmark, smooth-scroll links for **Home**, **Features**, **How It Works**, **About**, Dark/Light theme toggle, **Sign In**, and **Register**).
-- **Hero & Interactive Sandbox**: Test real-time NLP classification on preset sample reviews without authentication.
-- **Deep-Dive Sections**: Features architecture, 4-stage forensic NLP pipeline walkthrough, research provenance (Deceptive Opinion Spam Corpus & Yelp studies), call-to-action band, and footer.
-- **Smart App Gateways**: Action buttons pointing to private app features automatically route unauthenticated visitors to `/login?next=<path>` and return them after signing in.
+    subgraph Entrypoints
+        A1[Public Landing Sandbox\nNo Login Needed]
+        A2[Single Review Audit]
+        A3[Review Duel Comparer]
+        A4[Bulk CSV Batch Processing]
+    end
 
-### 2. Private Application Shell (`/app/*` — JWT Authentication Required)
-- **Protected Layout**: Desktop left sidebar, mobile overlay drawer, top bar with user identity badge, theme switcher, and logout.
-- **Single Analysis (`/app/single`)**:
-  - Review textarea with optional 1–5 star rating selector.
-  - Quick-preset chips for rapid demonstration.
-  - 3-tier calibrated classification: **Genuine**, **Suspicious**, or **Likely Fake**.
-  - Deception probability and confidence score meters.
-  - VADER sentiment polarity and rating-text dissonance flag.
-  - RapidFuzz duplicate and repetition detection.
-  - **SHAP Explainability**: Token attributions and plain-English explanations of deceptive patterns.
-  - **spaCy Forensic Profiling**: Type-Token Ratio (lexical diversity), uppercase shouting ratio, exclamation density.
-  - Automatic persistence to user history.
-- **Bulk Analysis (`/app/bulk`)**:
-  - Drag-and-drop CSV upload with client-side header and size validation (<10MB).
-  - High-throughput asynchronous background batch processing with real-time progress polling.
-  - Summary KPI cards and downloadable enriched CSV report.
-- **History (`/app/history`)**:
-  - Paginated, searchable, and filterable table of past review analyses.
-  - Interactive row detail modal with full linguistic breakdown.
-  - Record deletion.
-- **Visual Analytics (`/app/analytics`)**:
-  - **Recharts** donut chart for Genuine vs. Suspicious distribution.
-  - Horizontal bar chart of top recurring suspicious keywords (SHAP attributions).
-  - Multi-line chart of review volume over time.
-  - Summary telemetry KPI cards (% flagged, total analyzed, average confidence).
-- **Datasets (`/app/datasets` — Admin Only)**:
-  - Upload, list, preview first 10 rows, and delete custom CSV corpora.
-  - Automatic row counting and label balance calculation (e.g. `{"genuine": 800, "fake": 800}`).
-- **Models & Training (`/app/models` — Admin Only)**:
-  - Select dataset and model architecture:
-    - **TF-IDF + Logistic Regression**
-    - **TF-IDF + Random Forest Classifier**
-    - **DistilBERT Deep Learning Transformer**
-    - **Hybrid Linguistic Ensemble**
-  - Background training execution with live status.
-  - Test set metrics: **Accuracy**, **Precision**, **Recall**, **F1-Score**.
-  - Visual 2x2 **Confusion Matrix** (TP, FP, TN, FN) per run.
-  - Comparative benchmark table and one-click production model hot-swapping.
-- **Admin Dashboard (`/app/admin` — Admin Only)**:
-  - User account management and role promotion/demotion.
-  - Platform-wide inference telemetry and system health.
-- **Access Control (`/app/forbidden`)**:
-  - Clean "Access Restricted" page displayed if non-admin users navigate directly to admin routes.
+    subgraph ForensicEngine [4-Stage Forensic NLP Engine]
+        B1[1. Preprocessing & spaCy Stylometry\nTTR, Exclamation, Shouting]
+        B2[2. VADER Sentiment Polarity\nRating Dissonance Check]
+        B3[3. RapidFuzz Duplicate Detection\nCross-Corpus Fuzzy Matching]
+        B4[4. Calibrated ML Inference\nTF-IDF / DistilBERT + SHAP]
+    end
+
+    subgraph OutputAndPersistence [Output & Compliance Layer]
+        C1[Multi-Signal Probability Fusion\nGenuine / Suspicious / Likely Fake]
+        C2[(Database Persistence\nMySQL / SQLite)]
+        C3[PDF Audit Certificate Export\nSHA-256 Watermark]
+        C4[Enriched CSV / JSON Batch Export]
+    end
+
+    User -->|Visits /| A1
+    User -->|Logs in & Audits| A2
+    User -->|Compares 2 Reviews| A3
+    User -->|Uploads CSV| A4
+
+    A1 & A2 & A3 & A4 --> B1
+    B1 --> B2 --> B3 --> B4
+    B4 --> C1
+    C1 --> C2
+    C1 --> C3
+    C1 --> C4
+```
+
+---
+
+## 🔬 Core Forensic Logics & Formulas
+
+1. **Sublinear TF-IDF + Platt Sigmoid Calibration**:
+   $$\text{TF}_{\text{sublinear}} = 1 + \log(\text{TF}) \quad \text{for } \text{TF} > 0$$
+   $$P(y = 1 \mid f(x)) = \frac{1}{1 + \exp(A \cdot f(x) + B)}$$
+   *Applies cross-validated Platt scaling via `CalibratedClassifierCV` so probabilities represent true empirical risk.*
+2. **Sentiment & Rating Dissonance**:
+   $$\text{Dissonance Flag} = (\text{Rating} \ge 4 \land \text{Compound} \le -0.05) \lor (\text{Rating} \le 2 \land \text{Compound} \ge +0.05)$$
+   *Inverted reviews trigger an immediate $+0.18$ deception penalty.*
+3. **Lexical Diversity (Type-Token Ratio)**:
+   $$\text{TTR} = \frac{|\text{Unique Words}|}{|\text{Total Words}|}$$
+4. **Fuzzy N-Gram Deduplication (RapidFuzz)**:
+   Uses Token Sort Ratio to identify copy-paste syndication across products ($+0.12$ penalty for $\ge 95\%$ similarity).
+5. **Multi-Signal Probability Fusion Equation**:
+   $$P_{\text{final}} = \text{clamp}\Big(P_{\text{ML}} + \Delta_{\text{patterns}} + \Delta_{\text{dissonance}} + \Delta_{\text{duplicate}} + \Delta_{\text{burst}}, \; 0.01, \; 0.99\Big)$$
 
 ---
 
@@ -67,41 +73,78 @@ The system is split into two cleanly decoupled experiences:
 | Model Architecture | Accuracy | Precision | Recall | F1-Score | Δ vs Baseline | Latency | Production Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **DistilBERT Transformer** | **91.2%** | **90.7%** | **91.9%** | **91.3%** | **+1.2%** | 48.2 ms | Offline High-Precision Audits |
-| **TF-IDF + Logistic Regression (Calibrated)** | **90.0%** | **89.0%** | **91.3%** | **90.1%** | Baseline | **3.4 ms** | **Active Production Model** |
+| **TF-IDF + Calibrated Logistic Regression** | **90.0%** | **89.0%** | **91.3%** | **90.1%** | Baseline | **3.4 ms** | **Active Production Model** |
 | **TF-IDF + Random Forest Classifier** | **85.6%** | **85.5%** | **85.5%** | **85.5%** | -4.6% | 12.1 ms | Exploratory Ensemble |
 
-> **Production Trade-off**: *“DistilBERT reached 91.3% F1 vs 90.1% for the TF-IDF baseline, but at 48.2 ms vs 3.4 ms latency, so the baseline runs in production.”*
+> **Production Trade-off**: *DistilBERT achieves 91.3% F1 vs 90.1% for the TF-IDF baseline, but runs at 48.2 ms vs 3.4 ms latency. The calibrated baseline runs in production for sub-millisecond real-time response with zero GPU overhead.*
 
 ---
 
-## 🛠️ Tech Stack
+## 🌟 Key Application Features
+
+### 1. Public Landing Site (`/` — No Login Needed)
+- **Above-the-Fold Sandbox**: Compact layout at 1440×900 ensures the review textarea and "Analyze review" button are visible without scrolling.
+- **Dynamic Active Model Cards**: Fetches real held-out test accuracy and F1 score from `GET /api/v1/models/runs`.
+- **Live Forensic Sandbox**:
+  - Sample preset chips (`Astroturf spam`, `Genuine stay`, `Rating dissonance`, `Smear attack`).
+  - Unrated default 1–5 star selector with Clear button.
+  - Keyboard shortcut: `Ctrl + Enter` (and `Cmd + Enter` on Mac).
+  - Real execution latency measurement (`Analyzed in 38 ms`).
+  - Word-level SHAP explanation token chips (red for fake, green for genuine).
+
+### 2. Dedicated Authentication Suite (`/login`, `/register`)
+- **2-Column Layout**: Left hero panel with high-contrast background image, trust bullets, and balanced typography; right accessible form card.
+- **Route-Specific Dynamic Copy & Title Sync**:
+  - `/login`: *"Pick up where you left off — Your saved analyses, bulk uploads and model benchmarks are waiting."*
+  - `/register`: *"Start verifying reviews today — Create a free account to save your analyses, run bulk uploads and track results."*
+- **Enterprise Security**: Show/hide password, password strength indicator, Remember me, Google OAuth, and 2FA OTP verification step.
+
+### 3. Single Analysis & Review Duel Comparer (`/app/single`)
+- Full token-level SHAP diverging bar chart, stylometric radar metrics, and rating dissonance banners.
+- **Review Duel Comparer**: Side-by-side A/B mode analyzing two conflicting reviews for the same product to highlight risk delta and sentiment divergence.
+- **Cryptographic PDF Certificate**: Generates an A4 audit certificate with QR code, SHA-256 integrity hash, and public verification portal ([`/verify/:id`](file:///c:/Users/Namitha/Fake%20Review%20Detection%20System/frontend/src/pages/public/VerifyCertificate.tsx)).
+
+### 4. Asynchronous Bulk CSV Analysis (`/app/bulk`)
+- Drag-and-drop CSV upload with client-side header validation ($< 10\text{MB}$).
+- Live polling progress bar (updates every 1.5s) and summary KPI cards.
+- Downloadable enriched CSV & JSON reports with model predictions appended.
+
+### 5. Audit History & Telemetry Analytics (`/app/history`, `/app/analytics`)
+- Searchable, filterable, and paginated table with row inspection modals.
+- Interactive Recharts donut charts, recurring deceptive keywords bar chart, and review volume timelines.
+- **AI Forensic Co-Pilot Widget**: Contextual assistant answering questions on NLP metrics and review forensics.
+
+### 6. MLOps Model Training & Dataset Governance (`/app/models`, `/app/datasets`, `/app/admin`)
+- Custom dataset upload, preview first 10 rows, and label balance calculation.
+- On-demand training execution with 2×2 confusion matrix (TP, FP, TN, FN).
+- **Zero-Downtime Hot-Swapping**: One-click activation immediately updates the production model without restarting the server.
+
+---
+
+## 🛠️ Complete Tech Stack
 
 ### Frontend
-- **Framework**: React 19 + Vite + TypeScript
+- **Framework**: React 19 + Vite 8.3 + TypeScript 5.8
 - **Styling**: Tailwind CSS, Lucide React icons
-- **State & Routing**: React Router v7, TanStack Query
-- **Networking**: Axios with Bearer token interceptor and 401 handling
+- **State & Routing**: React Router v7, TanStack Query (React Query)
 - **Data Visualization**: Recharts
-- **Theme**: System-aware ThemeProvider (Dark / Light) with no flash on load
+- **Export Engines**: jsPDF, html2canvas
+- **UI Primitives**: In-house modular UI library in `frontend/src/components/ui/` (`Card`, `Badge`, `Skeleton`, `Modal`, `EmptyState`, `Toast`, `Table`, `Tabs`, `Pagination`, `Select`, `ShapDivergingChart`)
+- **Theme**: System-aware ThemeProvider (Dark / Light) with no FOUC
 
 ### Backend
 - **Framework**: Python 3.11, FastAPI, Pydantic v2
 - **ASGI Server**: Uvicorn
-- **Database**: MySQL 8 / SQLite local database fallback with SQLAlchemy 2.0 (PyMySQL driver)
+- **Database**: SQLite (Local failover) / MySQL 8.0 with SQLAlchemy 2.0 ORM
 - **Database Migrations**: Alembic
-- **Authentication**: Argon2 (`argon2-cffi`), JWT (`PyJWT`) with role claims and rate-limited login
+- **Authentication**: Argon2 (`argon2-cffi`), JWT (`PyJWT`), TOTP 2FA (`pyotp`)
 
 ### Machine Learning & NLP
-- **ML Classifiers**: scikit-learn (TF-IDF Vectorizer, Logistic Regression, Random Forest), joblib
+- **Classifiers**: scikit-learn (TfidfVectorizer, LogisticRegression, RandomForestClassifier, LinearSVC, CalibratedClassifierCV)
 - **Deep Learning**: PyTorch, Hugging Face Transformers (`DistilBERT`)
-- **NLP & Sentiment**: spaCy (`en_core_web_sm`), VADER (`vaderSentiment`)
-- **Duplicate Matching**: RapidFuzz
-- **Explainability**: SHAP & feature attributions
-
-### DevOps & Testing
-- **Web Server / Proxy**: Nginx
-- **Testing**: pytest & httpx (24/24 automated tests passing)
-- **CI/CD**: GitHub Actions workflow
+- **NLP & Stylometrics**: spaCy (`en_core_web_sm`), VADER (`vaderSentiment`)
+- **Duplicate Detection**: RapidFuzz (Token Sort Ratio & Levenshtein)
+- **Explainable AI**: SHAP linear & tree-based feature attributions
 
 ---
 
@@ -109,60 +152,73 @@ The system is split into two cleanly decoupled experiences:
 
 ### Option 1: Running Locally (Development Mode)
 
-#### 1. Backend Setup (PowerShell / Terminal)
+#### 1. Backend Setup
 ```powershell
-# Navigate to backend directory
 cd backend
-
-# Install Python dependencies
+python -m venv env
+.\env\Scripts\activate
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-
-# Start FastAPI backend
 uvicorn app.main:app --reload --port 8000
 ```
-*The backend auto-seeds sample datasets, initializes the default admin account, fits a baseline model, and opens at `http://localhost:8000` (Interactive API docs at `http://localhost:8000/docs`).*
+*API Swagger Documentation is available at `http://localhost:8000/docs`.*
 
 #### 2. Frontend Setup (Separate Terminal)
 ```powershell
-# Navigate to frontend directory
 cd frontend
-
-# Install npm dependencies
 npm install
-
-# Start Vite dev server
 npm run dev
 ```
-*The React application opens at `http://localhost:5173`.*
+*React web application opens at `http://localhost:5173`.*
 
 ---
 
 ## 🧪 Running Automated Tests
 
-Run the full backend test suite covering authentication, sentiment analysis, linguistic features, duplicate detection, and model training:
-
 ```powershell
+# Run backend pytest suite (24 tests)
 cd backend
 pytest -v
+
+# Run frontend production build & typecheck
+cd ../frontend
+npm run build
 ```
 
 ---
 
 ## 🔑 Default Credentials
 
-- **Admin Account**:
-  - **Email**: `admin@fakereview.ai`
-  - **Password**: `AdminPass123!`
-- **Regular User**: Register a new account via the `/register` page at any time.
+* **Admin Account**:
+  * **Email**: `admin@fakereview.ai`
+  * **Password**: `AdminPass123!`
+* **Standard User**: Register a new account via the `/register` page at any time.
 
 ---
 
-## ☁️ Cloud Deployment (Render / Railway / Google Colab)
+## 📁 Repository Structure
 
-1. **Google Colab (Model Training)**:
-   - Use [`scripts/colab_distilbert_trainer.py`](scripts/colab_distilbert_trainer.py) in a Google Colab GPU runtime to fine-tune DistilBERT on large corpora and save model artifacts into `backend/ml_models/`.
-
-2. **Render / Railway**:
-   - Deploy backend using `backend/Dockerfile` with environment variable `DATABASE_URL` pointing to your managed MySQL instance.
-   - Deploy frontend as a static site using `frontend/Dockerfile`.
+```
+Fake Review Detection System/
+├── backend/
+│   ├── app/
+│   │   ├── api/             # FastAPI REST routes (auth, reviews, bulk, models, datasets)
+│   │   ├── ml/              # Core ML & NLP engine (preprocessor, predictor, trainer, sentiment, explainability)
+│   │   ├── models/          # SQLAlchemy database entities
+│   │   ├── schemas/         # Pydantic request/response schemas
+│   │   └── main.py          # FastAPI application entrypoint
+│   ├── ml_models/           # Serialized model artifacts (.joblib)
+│   └── tests/               # Backend pytest test suite (24/24 passing)
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/             # Axios API client functions
+│   │   ├── components/ui/   # Modular UI primitive library (Card, Badge, Modal, etc.)
+│   │   ├── layouts/         # AuthLayout (2-col), AppLayout, LandingLayout
+│   │   ├── pages/           # Landing, Login, Register, Single, Bulk, Analytics, Models
+│   │   └── App.tsx          # React Router v7 routes
+│   └── vite.config.ts       # Vite bundler configuration
+│
+├── scripts/                 # PyTorch / Hugging Face Colab DistilBERT training script
+└── README.md                # Project documentation overview
+```
