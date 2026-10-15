@@ -164,6 +164,25 @@ export const BulkAnalysis: React.FC = () => {
     }
   };
 
+  const handleDownloadSampleCSV = () => {
+    const csvContent = `review_text,rating,reviewer_id
+"BEST HOTEL IN THE WORLD! The pillows are made of angel feathers! Never seen such divine luxury in my entire lifetime! Perfection 100/10 stars!",5,REV-BOT-BURST-01
+"We stayed for three nights during our family trip to Chicago. Location near Millennium Park was great. The room was clean, bed was comfortable, and staff helped with luggage quickly.",4,REV-ORGANIC-USER-42
+"The bathroom was filthy, water pressure was terrible, and room smelled of damp smoke. Ruined our entire stay.",5,REV-DISSONANT-99
+"TOTAL SCAM!! The owner is a criminal and thief who stole our money!! Pure poison and disgusting mafia operation!!",1,REV-SMEAR-BOT-09
+"The breakfast buffet was fresh with lots of fruit and hot eggs. Nice quiet room on the 8th floor.",4,REV-ORGANIC-USER-42
+`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'veridex_demo_sample_reviews.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
       {/* Page Header */}
@@ -220,6 +239,22 @@ export const BulkAnalysis: React.FC = () => {
             Supported columns: <span className="font-semibold text-slate-600 dark:text-slate-300">review_text</span> (required), <span className="text-slate-600 dark:text-slate-300">rating</span> (optional 1-5), <span className="text-indigo-600 dark:text-indigo-400 font-semibold">reviewer_id</span> (optional for burst detection), <span className="text-slate-600 dark:text-slate-300">date</span> (optional)
           </div>
         </div>
+      </div>
+
+      {/* Demo Sample CSV Download Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/60 text-xs">
+        <div className="flex items-center gap-2 text-indigo-950 dark:text-indigo-200">
+          <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <span className="font-medium">Need a test dataset? Download our pre-configured demo CSV with 5 diverse sample reviews:</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleDownloadSampleCSV}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-indigo-100 dark:hover:bg-slate-800 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-semibold shadow-xs transition-all hover:scale-102 cursor-pointer"
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5" />
+          <span>Download Sample CSV</span>
+        </button>
       </div>
 
       {validationError && (

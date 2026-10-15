@@ -20,6 +20,8 @@ import {
   AlertTriangle,
   Copy,
   Calendar,
+  Download,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export const History: React.FC = () => {
@@ -91,19 +93,64 @@ export const History: React.FC = () => {
     return <Meh className="w-3.5 h-3.5 text-amber-500" />;
   };
 
+  const handleExportHistoryCSV = () => {
+    if (!historyItems || historyItems.length === 0) {
+      alert('No history records to export.');
+      return;
+    }
+    const headers = ['id', 'created_at', 'prediction', 'confidence', 'fake_probability', 'rating', 'reviewer_id', 'sentiment_label', 'sentiment_score', 'is_duplicate', 'review_text'];
+    const rows = historyItems.map(item => [
+      item.id,
+      `"${item.created_at}"`,
+      `"${item.prediction}"`,
+      item.confidence,
+      item.fake_probability,
+      item.rating ?? '',
+      `"${item.reviewer_id ?? ''}"`,
+      `"${item.sentiment_label}"`,
+      item.sentiment_score,
+      item.is_duplicate,
+      `"${item.review_text.replace(/"/g, '""')}"`
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `veridex_audit_history_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
-            <HistoryIcon className="w-6 h-6" />
-          </div>
-          Saved Review Analysis History
-        </h1>
-        <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          Search, filter, inspect, and manage all your historical review evaluations and explainability audit logs.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+              <HistoryIcon className="w-6 h-6" />
+            </div>
+            Saved Review Analysis History
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+            Search, filter, inspect, and manage all your historical review evaluations and explainability audit logs.
+          </p>
+        </div>
+
+        {historyItems.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExportHistoryCSV}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 shadow-xs transition-all hover:scale-102 cursor-pointer self-start sm:self-auto"
+            title="Download your audit records as a CSV spreadsheet"
+          >
+            <Download className="w-4 h-4 text-indigo-500" />
+            <span>Export History CSV</span>
+          </button>
+        )}
       </div>
 
       {/* Search and Filters Bar */}

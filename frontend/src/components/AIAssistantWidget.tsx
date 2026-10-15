@@ -15,6 +15,8 @@ import {
   RefreshCw,
   HelpCircle,
   CheckCircle2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export const AIAssistantWidget: React.FC = () => {
@@ -34,6 +36,14 @@ export const AIAssistantWidget: React.FC = () => {
     'What is rating-sentiment dissonance?',
     'Explain SHAP explainability',
   ]);
+
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const handleCopyMessage = (text: string, index: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -288,7 +298,29 @@ export const AIAssistantWidget: React.FC = () => {
                   {msg.role === 'user' ? (
                     <p className="text-xs font-sans whitespace-pre-wrap">{msg.content}</p>
                   ) : (
-                    renderFormattedContent(msg.content)
+                    <>
+                      {renderFormattedContent(msg.content)}
+                      <div className="flex justify-end pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(msg.content, idx)}
+                          className="inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                          title="Copy assistant reply"
+                        >
+                          {copiedIndex === idx ? (
+                            <>
+                              <Check className="w-2.5 h-2.5 text-emerald-500" />
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-2.5 h-2.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

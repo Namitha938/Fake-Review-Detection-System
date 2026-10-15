@@ -36,6 +36,9 @@ import {
   ShieldAlert,
   BarChart3,
   TrendingUp,
+  Download,
+  Check,
+  RotateCcw,
 } from 'lucide-react';
 
 export const SingleAnalysis: React.FC = () => {
@@ -56,6 +59,50 @@ export const SingleAnalysis: React.FC = () => {
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [urlModalOpen, setUrlModalOpen] = useState(false);
   const [showHighlighter, setShowHighlighter] = useState(true);
+
+  const [copiedSummary, setCopiedSummary] = useState(false);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleAnalyze();
+    }
+  };
+
+  const handleCopySummary = () => {
+    if (!result) return;
+    const summary = `--- VERIDEX FORENSIC AUDIT REPORT ---
+Review ID: VRX-${result.id || 'LIVE'}
+Date: ${new Date(result.created_at || Date.now()).toLocaleString()}
+Verdict: ${result.prediction.toUpperCase()} (${result.confidence.toFixed(1)}% Confidence)
+Deception Probability: ${(result.fake_probability * 100).toFixed(1)}%
+VADER Sentiment: ${result.sentiment_label.toUpperCase()} (${result.sentiment_score})
+Star Rating: ${result.rating ? `${result.rating} / 5 stars` : 'Not provided'}
+Duplicate Status: ${result.is_duplicate ? `DUPLICATE DETECTED (${result.duplicate_similarity}% match)` : 'Original'}
+Top Attributions: ${result.suspicious_keywords?.slice(0, 5).map(k => `${k.word} (${k.score > 0 ? '+' : ''}${k.score.toFixed(3)})`).join(', ') || 'None'}
+Review Text: "${result.review_text}"
+-------------------------------------`;
+    navigator.clipboard.writeText(summary);
+    setCopiedSummary(true);
+    setTimeout(() => setCopiedSummary(false), 2500);
+    setToast({ message: 'Audit summary copied to clipboard', type: 'success' });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleExportJSON = () => {
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Veridex_Audit_VRX-${result.id || 'result'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setToast({ message: 'JSON audit payload exported', type: 'success' });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleExportCertificate = () => {
     if (!result || isExporting) return;
@@ -311,20 +358,38 @@ export const SingleAnalysis: React.FC = () => {
                 rows={4}
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Type or paste any customer review here to analyze live..."
+                onKeyDown={handleKeyDown}
+                placeholder="Type or paste any customer review here to analyze live... (Press Ctrl+Enter to run)"
                 className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-sans"
               />
             </div>
 
             {/* Action Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {reviewText.trim().split(/\s+/).filter(Boolean).length} words • {reviewText.length} characters
-              </span>
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  {reviewText.trim().split(/\s+/).filter(Boolean).length} words • {reviewText.length} characters
+                </span>
+                <span className="text-[11px] opacity-75 hidden sm:inline">
+                  (Press <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-[10px]">Ctrl+Enter</kbd> to analyze)
+                </span>
+                {reviewText && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewText('');
+                      setResult(null);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Clear Text
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => handleAnalyze()}
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all hover:scale-102"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all hover:scale-102 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -365,8 +430,35 @@ export const SingleAnalysis: React.FC = () => {
                       Saved to History
                     </span>
                   </div>
-                  {/* Certificate Export & AI Assistant Buttons */}
-                  <div className="flex items-center gap-2">
+                  {/* Action Buttons: Certificate Export, JSON Export, Copy, AI Assistant */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopySummary}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-xs transition-all hover:scale-102 cursor-pointer"
+                      title="Copy report summary to clipboard"
+                    >
+                      {copiedSummary ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Summary</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportJSON}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-xs transition-all hover:scale-102 cursor-pointer"
+                      title="Export analysis as JSON payload"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <span>JSON</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -376,7 +468,7 @@ export const SingleAnalysis: React.FC = () => {
                           })
                         );
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300 text-xs font-semibold shadow-xs transition-all hover:scale-102"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300 text-xs font-semibold shadow-xs transition-all hover:scale-102 cursor-pointer"
                       title="Ask AI Assistant about this review"
                     >
                       <Bot className="w-3.5 h-3.5 text-violet-500" />
@@ -386,7 +478,7 @@ export const SingleAnalysis: React.FC = () => {
                       type="button"
                       onClick={handleExportCertificate}
                       disabled={isExporting || !result}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shadow-xs transition-all hover:scale-102 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shadow-xs transition-all hover:scale-102 disabled:opacity-50 cursor-pointer"
                       title="Download PDF Authenticity Certificate"
                     >
                       {isExporting ? (
